@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Skill picker",
+    "description": "Browse, search and pick a skill from a list in the composer toolbar; the matching /name command is inserted for you."
+  }
+}
