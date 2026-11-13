@@ -20,31 +20,17 @@ window.__ModuleLoader__.load({
      * Display metadata: every bundled skill gets a Chinese label, a section
      * and a short explanation of what it is for. Unknown skills fall back to
      * their catalog description so a newly installed skill still appears.
+     *
+     * Keys are catalog ids, so a DSH release that renames or merges a shipped
+     * skill only needs the entries below updated; anything not listed here is
+     * still listed from live catalog data.
      * ------------------------------------------------------------------ */
     const SKILL_INFO = {
-      'agent-experience': {
-        zh: '智能体体验设计',
+      'dsh-doc': {
+        zh: 'DSH 使用手册',
         group: '平台扩展',
-        emoji: '🧭',
-        desc: '设计工具定义、技能描述与多步流程，让模型用最少上下文找到正确的信息。',
-      },
-      'cordis-composition-reference': {
-        zh: 'Cordis 组合参考',
-        group: '平台扩展',
-        emoji: '🧩',
-        desc: '查阅 Loader 的 YAML 组装语法与可安装的插件包清单，用于修改预设或组合。',
-      },
-      'cordis-plugin-development': {
-        zh: 'Cordis 插件开发',
-        group: '平台扩展',
-        emoji: '🔌',
-        desc: '设计、安装、启用、配置和排查插件、面板、工具与 MCP 连接。',
-      },
-      'editing-cordis-compositions': {
-        zh: '编辑 Cordis 组合',
-        group: '平台扩展',
-        emoji: '🗂️',
-        desc: '创建、修改并验证智能体预设等 Cordis 组合，确认预设确实能挂载。',
+        emoji: '📖',
+        desc: '查 DSH 自身的功能、设置、插件、预设、工具与 Cordis API，也用于升级插件或 profile。',
       },
       'hindsight-coding-agent': {
         zh: 'Hindsight 记忆',
@@ -92,7 +78,7 @@ window.__ModuleLoader__.load({
         zh: 'Office 文档套件',
         group: '办公文档',
         emoji: '📚',
-        desc: '创建、编辑、检查与转换 Word、Excel、PowerPoint 和 PDF。',
+        desc: '办公任务总入口；加载后才启用渲染、转换与重算工具，再转到 Word/Excel/PPT 分技能。',
       },
       'office-docx': {
         zh: 'Word 文档',
@@ -136,6 +122,11 @@ window.__ModuleLoader__.load({
         emoji: '🛡️',
         desc: '排查 Windows 上意外的沙箱拒绝访问，检查并修复相关目录 ACL。',
       },
+      /* DSH 0.2.2-rc.1 merged four Creator-mode skills into `dsh-doc`, and
+         `office-export-pdf` / `office-recalculate` / `office-render` are now
+         tools behind `office` rather than catalog entries. Their entries stay
+         so a profile still on an older release keeps readable names; a current
+         catalog simply never returns these ids, and they cost one lookup each. */
     }
 
     const GROUPS = ['开发编程', '游戏开发', '办公文档', '搜索研究', '平台扩展', '系统环境', '其他']

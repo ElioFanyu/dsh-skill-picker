@@ -73,7 +73,17 @@ dsh plugin --profile <profile> add link:<本仓库路径>
 
 ## 兼容性
 
-在 DSH **0.2.2-rc.1** 上开发并验证。依赖的都是稳定接口：`ctx.slots.inject/register`、`ctx.locale`、`ctx.remote.skills`、`inputActions`。
+已在 DSH **0.2.2-rc.2** 上验证（`engines.dsh: >=0.2.2-rc.1 <0.3.0`）。依赖的都是稳定接口：`ctx.slots.inject/register`、`ctx.locale`、`ctx.remote.skills`、`inputActions`。
+
+### 与 rc.2 相关的两处目录变化
+
+rc.2 把 Creator 模式的四个技能（`agent-experience`、`cordis-plugin-development`、`editing-cordis-compositions`、`cordis-composition-reference`）合并成了单个 `dsh-doc`，另外 `office-export-pdf` / `office-recalculate` / `office-render` 不再是独立技能，而是 `office` 加载后才出现的工具。
+
+本插件因此：
+
+- 为 `dsh-doc` 提供了中文名「DSH 使用手册」；
+- 保留旧名字典条目不报错——旧版本 profile 仍能显示可读名称，新目录只是永远不会返回这些 id；
+- 未收录的技能一律走「目录原始描述 + 未收录角标」的回退路径，所以即使将来再合并技能，列表也不会缺条目或崩溃。
 
 ## License
 
