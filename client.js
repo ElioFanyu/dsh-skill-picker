@@ -17,62 +17,403 @@ window.__ModuleLoader__.load({
     const NS = 'skill-picker'
 
     /* ------------------------------------------------------------------ *
-     * Display metadata: every bundled skill gets a Chinese label, a section
-     * and a short explanation of what it is for. Unknown skills fall back to
-     * their catalog description so a newly installed skill still appears.
-     *
-     * Keys are catalog ids, so a DSH release that renames or merges a shipped
-     * skill only needs the entries below updated; anything not listed here is
-     * still listed from live catalog data.
+     * Display metadata. Keys are catalog ids: one entry per skill gives it a
+     * Chinese label, a section and one line about what it is for. A skill the
+     * table does not know is still listed, labelled from the catalog and
+     * placed by GROUP_RULES, so a new install never disappears or lands in
+     * 「其他」 just because nobody typed a name for it. Keys for skills a newer
+     * release retired stay here so an older profile keeps readable names.
      * ------------------------------------------------------------------ */
     const SKILL_INFO = {
-      'dsh-doc': {
-        zh: 'DSH 使用手册',
-        group: '平台扩展',
-        emoji: '📖',
-        desc: '查 DSH 自身的功能、设置、插件、预设、工具与 Cordis API，也用于升级插件或 profile。',
-      },
-      'hindsight-coding-agent': {
-        zh: 'Hindsight 记忆',
-        group: '平台扩展',
-        emoji: '🧠',
-        desc: '读写跨会话的编码记忆，按仓库配置知识库，排查记忆相关问题。',
-      },
       'dev-expert': {
         zh: '编程专家',
         group: '开发编程',
         emoji: '👨‍💻',
-        desc: '全栈编程助手：接口设计、代码生成与审查、重构、测试、性能与任务拆解。',
+        desc: '全栈编程助手：API 设计、Bug 诊断、代码生成与审查、重构、测试、性能与任务拆解。',
       },
       'dev-expert-pro': {
         zh: '编程专家 Pro',
         group: '开发编程',
         emoji: '🚀',
-        desc: '在编程专家之上补充鸿蒙 ArkTS/ArkUI、微信小程序与工程专题资料。',
+        desc: '在编程专家之上补充鸿蒙 ArkTS/ArkUI、微信小程序与小游戏资料，按专题读包内知识。',
       },
       'dev-god': {
         zh: '编程大神',
         group: '开发编程',
         emoji: '🧙',
-        desc: '接手陌生代码库，拆解需求、补齐实现、追根因、重构并推进到可运行可验收。',
+        desc: '接手陌生代码库：拆需求、补实现、追根因、做重构、联调前后端，推进到能运行能验收。',
+      },
+      'game-design': {
+        zh: '游戏概念与设计',
+        group: '游戏设计',
+        emoji: '📐',
+        desc: '把小说或产品需求变成可玩的游戏概念，写世界观规则、关卡与分支叙事、美术音频方向。',
       },
       'game-designer': {
         zh: '游戏系统设计师',
-        group: '游戏开发',
+        group: '游戏设计',
         emoji: '🎮',
-        desc: '设计玩法机制与核心循环、经济系统与数值配平，撰写 GDD 并规划试玩。',
+        desc: '设计玩法机制与核心循环、经济系统与通胀模型、进阶曲线与数值配平，撰写 GDD 并规划试玩。',
+      },
+      'game-development-pro': {
+        zh: '全引擎游戏开发',
+        group: '游戏设计',
+        emoji: '🕹️',
+        desc: '覆盖设计到实现的游戏全流程：关卡、叙事、技术美术、音频，以及 Blender/Godot/Roblox/Unity/Unreal。',
+      },
+      'game-build': {
+        zh: '游戏构建实现',
+        group: '游戏设计',
+        emoji: '🏗️',
+        desc: '把已确认的设计做成能跑的灰盒再到成品，含规则回归、一条端到端验证命令和构建简报。',
+      },
+      'game-qa': {
+        zh: '游戏盲玩验收',
+        group: '游戏设计',
+        emoji: '🔍',
+        desc: '不读源码，以新玩家身份在目标环境从头盲玩，查上手引导、操作流与节奏问题，产出验收记录。',
+      },
+      'novel-to-game': {
+        zh: '小说改编游戏',
+        group: '游戏设计',
+        emoji: '📖',
+        desc: '端到端把小说改成可玩游戏：需求、改编分析、概念、世界与视觉设计、构建、盲玩验收。',
+      },
+      'novel-game-analyze': {
+        zh: '小说拆解分析',
+        group: '游戏设计',
+        emoji: '🔬',
+        desc: '拆小说为改编素材：主线弧光、冲突场景、人物关系与动机、秘密与信息差、世界规则、改编边界。',
+      },
+      router: {
+        zh: '游戏开发路由',
+        group: '游戏设计',
+        emoji: '🧭',
+        desc: '判断需求属于哪个引擎与哪类任务（Godot/Unity/Unreal/Godot/Bevy/Phaser 等），再指向正确的技能。',
+      },
+      'card-game': {
+        zh: '卡牌与构筑',
+        group: '游戏类型',
+        emoji: '🃏',
+        desc: '设计卡牌与 deckbuilder：卡牌即数据加一个效果解释器、牌区、触发栈与可复现洗牌。',
+      },
+      'dialogue-systems': {
+        zh: '分支对话系统',
+        group: '游戏类型',
+        emoji: '💬',
+        desc: '用 Ink / Yarn Spinner / JSON 图做分支对话：台词、选项、条件、变量与本地化 ID。',
+      },
+      'fps-shooter': {
+        zh: '第一人称射击',
+        group: '游戏类型',
+        emoji: '🔫',
+        desc: '设计射击战斗：命中扫描与抛射物、击杀耗时、伤害衰减、后坐力、开镜灵敏度与延迟补偿。',
+      },
+      platformer: {
+        zh: '平台跳跃',
+        group: '游戏类型',
+        emoji: '🎯',
+        desc: '设计 2D 平台跳跃：土狼时间、跳跃缓冲、可变跳跃高度、下落重力、墙角修正、墙跳与检查点。',
+      },
+      puzzle: {
+        zh: '解谜玩法',
+        group: '游戏类型',
+        emoji: '🧩',
+        desc: '设计网格与逻辑解谜：三消连锁、推箱子、唯一解谜题（数织/数独）、精确撤销与求解器验关。',
+      },
+      roguelike: {
+        zh: 'Roguelike 循环',
+        group: '游戏类型',
+        emoji: '☠️',
+        desc: '设计单局制 Roguelike：局内结构、永久死亡、局外成长、种子与每日挑战、回合顺序与对称视野。',
+      },
+      rpg: {
+        zh: 'RPG 数值',
+        group: '游戏类型',
+        emoji: '⚔️',
+        desc: '设计 RPG 进阶与战斗数值：带修正器栈的属性、经验曲线、伤害公式、装备词缀与任务。',
+      },
+      'survival-crafting': {
+        zh: '生存与制作',
+        group: '游戏类型',
+        emoji: '🪓',
+        desc: '设计生存制作循环：采集、配方与科技树、负重、腐坏、饥饿与温度、基地建造。',
+      },
+      'tower-defense': {
+        zh: '塔防设计',
+        group: '游戏类型',
+        emoji: '🏰',
+        desc: '设计塔防：路线与迷宫寻路、波次节奏、索敌优先级、护甲与飞行克星、金币经济。',
+      },
+      'visual-novel': {
+        zh: '视觉小说',
+        group: '游戏类型',
+        emoji: '📺',
+        desc: '用 Ren\'Py 或任意引擎做视觉小说：路线与结局、随时存档、回顾、仅跳过已读与打字机文本。',
+      },
+      'game-ai': {
+        zh: '游戏 AI 设计',
+        group: '玩法机制',
+        emoji: '🤖',
+        desc: '设计敌人与 NPC AI：选 FSM / 行为树 / 效用 / GOAP，并做感知、转向与 A* 寻路。',
+      },
+      'ai-behavior-trees-utility-ai': {
+        zh: '行为树与效用 AI',
+        group: '玩法机制',
+        emoji: '🌳',
+        desc: '与引擎无关的行为树与效用 AI 代码：黑板、响应式复合节点、装饰器与响应曲线打分。',
+      },
+      'input-systems': {
+        zh: '输入系统',
+        group: '玩法机制',
+        emoji: '🎛️',
+        desc: '设计输入架构：具名动作、摇杆死区、按键缓冲、带冲突检测的改键，含 Godot InputMap 代码。',
+      },
+      'save-systems': {
+        zh: '存档系统',
+        group: '玩法机制',
+        emoji: '💾',
+        desc: '与引擎无关的存档读档：序列化什么、槽位与自动存档、原子写入与版本迁移。',
+      },
+      'level-design': {
+        zh: '关卡设计',
+        group: '玩法机制',
+        emoji: '🗺️',
+        desc: '与引擎无关的关卡设计：按真实控制器取玩家度量、钥匙与能力门禁与死锁检查、节奏铺陈。',
+      },
+      'procedural-gen': {
+        zh: '程序化生成',
+        group: '玩法机制',
+        emoji: '🌀',
+        desc: '用 Python 做程序化生成：可复现随机、地牢布局、波函数坍缩、噪声地形与战利品表。',
+      },
+      'game-feel': {
+        zh: '手感与打击感',
+        group: '体验与表现',
+        emoji: '💥',
+        desc: '给可用机制加手感：基于创伤值的震屏、命中停顿、缓动补间、挤压拉伸与击退。',
+      },
+      'audio-design': {
+        zh: '游戏音频设计',
+        group: '体验与表现',
+        emoji: '🎵',
+        desc: '与引擎无关的音频技术：总线布局、分贝音量滑杆、响度、对白压低音乐、自适应音乐与音效变化。',
+      },
+      'camera-systems': {
+        zh: '摄像机系统',
+        group: '体验与表现',
+        emoji: '🎥',
+        desc: '做游戏摄像机：2D 跟随死区与前瞻、第三人称环绕、第一人称视角与分屏。',
+      },
+      'performance-optimization': {
+        zh: '性能优化',
+        group: '体验与表现',
+        emoji: '⚡',
+        desc: '靠测量定位掉帧：CPU 还是 GPU 瓶颈，再取最大收益的修法（合批、对象池、GC 抖动）。',
+      },
+      'physics-tuning': {
+        zh: '物理调校',
+        group: '体验与表现',
+        emoji: '🧲',
+        desc: '与引擎无关的物理调校：固定步长与插值、穿模用 CCD、阻尼、求解迭代与碰撞层矩阵。',
+      },
+      'shader-programming': {
+        zh: '着色器原理',
+        group: '体验与表现',
+        emoji: '✨',
+        desc: '与引擎无关的着色器技术（GLSL，含 HLSL 对照）：消融、描边、菲涅尔边缘与后处理。',
+      },
+      'create-game-assets': {
+        zh: '游戏美术资产',
+        group: '体验与表现',
+        emoji: '🎨',
+        desc: '规划、生成或选材并校验一致的游戏美术：风格指南、精灵、像素画、图集、图标与贴图。',
+      },
+      'game-ui-ux': {
+        zh: '游戏 UI 规则',
+        group: '游戏 UI',
+        emoji: '🖼️',
+        desc: '与引擎无关的 HUD 与菜单规则：锚点与容器、缩放、安全区、手柄焦点、事件驱动 HUD 与无障碍底线。',
+      },
+      'game-ui-product-design': {
+        zh: '游戏 UI 策划',
+        group: '游戏 UI',
+        emoji: '📋',
+        desc: '出图前先做策划：写 GDD、PRD 与 UI 交互逻辑、交互流程与状态机。',
+      },
+      'game-ui-specification': {
+        zh: '游戏 UI 规范',
+        group: '游戏 UI',
+        emoji: '📏',
+        desc: '建立游戏 UI 规范与共享视觉契约：色彩、字体、布局、几何、组件、交互态、适配与生图约束。',
+      },
+      'game-ui-extension': {
+        zh: '游戏 UI 扩屏',
+        group: '游戏 UI',
+        emoji: '🧱',
+        desc: '把已有游戏 UI 扩成完整屏幕体系：玩家旅程、功能流程、优先级清单、状态、边界与实现契约。',
+      },
+      'game-ui-page-generator': {
+        zh: '游戏 UI 出图',
+        group: '游戏 UI',
+        emoji: '🖌️',
+        desc: '按已确认风格与屏幕契约，一次生成一整张游戏 UI 页面，附页面简报、可复现提示词与负向约束。',
+      },
+      'game-ui-component-breakdown': {
+        zh: '游戏 UI 拆组件',
+        group: '游戏 UI',
+        emoji: '🧩',
+        desc: '把已确认的游戏 UI 页面或风格拆成可单独生成的组件资产：命名、状态、尺寸、提示词与可追溯清单。',
+      },
+      'game-ui-sprite-sheet-splitter': {
+        zh: 'UI 拼图拆分',
+        group: '游戏 UI',
+        emoji: '✂️',
+        desc: '把整张游戏 UI 拼图或组件板拆成独立透明 PNG，写出裁剪元数据、校验尺寸与 alpha、打包 ZIP。',
+      },
+      'game-ui-asset-pipeline': {
+        zh: 'UI 图集交付',
+        group: '游戏 UI',
+        emoji: '📦',
+        desc: '把语义化命名的透明 UI PNG 打成图集，保留组件状态与九宫格元数据，导出确定性 JSON 交付清单。',
+      },
+      'game-ui-workflow': {
+        zh: '游戏 UI 全流程',
+        group: '游戏 UI',
+        emoji: '🔗',
+        desc: '串起端到端游戏 UI 流水线：策划、规范、扩屏、出图、拆组件、拆分、打包、打图集、交付与校验。',
       },
       'godot-game-script-engineer': {
-        zh: 'Godot 脚本工程师',
-        group: '游戏开发',
+        zh: 'Godot 脚本工程',
+        group: '引擎专精',
         emoji: '🕹️',
-        desc: '编写与调试 GDScript/C#，设计场景节点树、信号解耦与资源格式。',
+        desc: 'Godot 4.x 玩法脚本专家：GDScript 2.0 类型安全、节点拆分、signal 解耦、Resource 建模与性能下沉。',
       },
-      'multi-search-engine': {
-        zh: '多引擎搜索',
-        group: '搜索研究',
-        emoji: '🔎',
-        desc: '跨 16 个搜索引擎检索、去重并交叉验证，输出带来源与可信度的结果。',
+      'godot-gdscript': {
+        zh: 'GDScript 语言',
+        group: '引擎专精',
+        emoji: '📜',
+        desc: 'Godot 4.7 GDScript 2.0：静态类型、@export 与 @onready、await 协程，以及 3.x 代码迁移。',
+      },
+      'godot-2d-movement': {
+        zh: 'Godot 2D 移动',
+        group: '引擎专精',
+        emoji: '🏃',
+        desc: 'Godot 4.7 CharacterBody2D 移动：平台跳跃、俯视八向、斜坡与单向平台，附无头落地测试。',
+      },
+      'godot-3d-essentials': {
+        zh: 'Godot 3D 基础',
+        group: '引擎专精',
+        emoji: '🧊',
+        desc: 'Godot 4.7 3D 场景搭建：Camera3D、光照、WorldEnvironment、材质、GridMap 与局部全局变换。',
+      },
+      'godot-animation': {
+        zh: 'Godot 动画',
+        group: '引擎专精',
+        emoji: '🎞️',
+        desc: 'Godot 4.7 动画 API：AnimationPlayer、AnimationTree 状态机、AnimatedSprite2D 与 create_tween()。',
+      },
+      'godot-audio': {
+        zh: 'Godot 音频',
+        group: '引擎专精',
+        emoji: '🔊',
+        desc: 'Godot 4.7 音频 API：AudioStreamPlayer 2D/3D、总线布局、音量与静音、复音、循环导入与播放位置。',
+      },
+      'godot-csharp': {
+        zh: 'Godot C#',
+        group: '引擎专精',
+        emoji: '©️',
+        desc: 'Godot 4.7 里的 C# 与 .NET：partial 节点类、PascalCase 生命周期、[Export] 与 [Signal] 及 csproj。',
+      },
+      'godot-export': {
+        zh: 'Godot 导出',
+        group: '引擎专精',
+        emoji: '📤',
+        desc: '导出 Godot 4.7 项目：模板、桌面/Web/Android 的 export_presets.cfg、命令行导出与 Web COOP/COEP 头。',
+      },
+      'godot-gdscript-headless-testing': {
+        zh: 'Godot 无头测试',
+        group: '引擎专精',
+        emoji: '✅',
+        desc: '用 godot --headless 跑 GDScript 测试与 SceneTree runner，失败返回非零，让 CI 能卡住合并。',
+      },
+      'godot-multiplayer': {
+        zh: 'Godot 联机',
+        group: '引擎专精',
+        emoji: '🌐',
+        desc: 'Godot 4.7 高层联机：ENet 建立与加入、@rpc 与 rpc_id()、MultiplayerSpawner 与 Synchronizer。',
+      },
+      'godot-nodes-scenes': {
+        zh: 'Godot 场景树',
+        group: '引擎专精',
+        emoji: '🌲',
+        desc: 'Godot 4.7 场景树结构：可复用 .tscn、instantiate()、autoload，以及断链 res:// 与 uid 检查。',
+      },
+      'godot-physics': {
+        zh: 'Godot 物理',
+        group: '引擎专精',
+        emoji: '⚙️',
+        desc: 'Godot 4.7 物理 API：刚体与 Area 类型、碰撞层与掩码、受击盒信号、RayCast 与空间查询、Jolt。',
+      },
+      'godot-resources': {
+        zh: 'Godot 资源',
+        group: '引擎专精',
+        emoji: '🗃️',
+        desc: 'Godot 4.7 数据驱动：自定义 Resource、class_name 与 @export、.tres、共享引用与 duplicate_deep()。',
+      },
+      'godot-shaders': {
+        zh: 'Godot 着色器',
+        group: '引擎专精',
+        emoji: '💠',
+        desc: 'Godot 4.7 着色语言：canvas_item、spatial 与粒子着色器、内置量、ShaderMaterial 接线与编译检查。',
+      },
+      'godot-signals-groups': {
+        zh: 'Godot 信号分组',
+        group: '引擎专精',
+        emoji: '📡',
+        desc: 'Godot 4.7 信号与节点组：类型化信号、Callable 连接、一次性与延迟连接、事件总线与 call_group。',
+      },
+      'godot-tilemap': {
+        zh: 'Godot 瓦片地图',
+        group: '引擎专精',
+        emoji: '🧱',
+        desc: 'Godot 4.7 TileMapLayer 与 TileSet：图集源、数据层、地形自动拼接与运行时 set_cell / local_to_map。',
+      },
+      'godot-ui-control': {
+        zh: 'Godot UI 控件',
+        group: '引擎专精',
+        emoji: '🪟',
+        desc: 'Godot 4.7 Control 节点：锚点、容器、Theme 与 StyleBox、焦点邻居与拉伸设置，附无头布局检查。',
+      },
+      'dreamina-canvas-cli': {
+        zh: '即梦画布创作',
+        group: '多媒体创作',
+        emoji: '🎨',
+        desc: '通过即梦画布做图、视频与音频创作：文生图、图生图、文生视频、参考视频、首尾帧、配音与音乐。',
+      },
+      'jimeng-drama': {
+        zh: '短剧漫剧创作',
+        group: '多媒体创作',
+        emoji: '🎬',
+        desc: '竖屏多集短剧/漫剧全流程：故事设定、分集大纲、剧本、角色与场景图、分镜、片段视频与合成。',
+      },
+      'xyq-skill': {
+        zh: '小云雀媒体创作',
+        group: '多媒体创作',
+        emoji: '🐦',
+        desc: '用小云雀 CLI 上传素材或生图、生成视频、超分与擦字幕，并可操作画布、节点、3D 导演台与多轨草稿。',
+      },
+      'xyq-short-drama-skill': {
+        zh: '小云雀短剧',
+        group: '多媒体创作',
+        emoji: '🎭',
+        desc: '调用小云雀短剧 Agent：原创或续写剧本、分集创作、角色场景图、故事版、片段视频与合成成片。',
+      },
+      'xyq-marketing-skill': {
+        zh: '小云雀营销成片',
+        group: '多媒体创作',
+        emoji: '📣',
+        desc: '用小云雀公开营销 API，按商品图文生成剧情广告、品牌大片或达人带货视频，并查询进度与积分。',
       },
       office: {
         zh: 'Office 文档套件',
@@ -90,7 +431,7 @@ window.__ModuleLoader__.load({
         zh: 'Excel 表格',
         group: '办公文档',
         emoji: '📊',
-        desc: '读取、创建、编辑 .xlsx 工作簿、数据与公式。',
+        desc: '读取、创建、编辑并校验 .xlsx 工作簿、数据与公式。',
       },
       'office-pptx': {
         zh: 'PPT 演示文稿',
@@ -98,23 +439,29 @@ window.__ModuleLoader__.load({
         emoji: '📽️',
         desc: '创建、读取、编辑并校验 .pptx 演示文稿。',
       },
-      'office-export-pdf': {
-        zh: '导出 PDF',
-        group: '办公文档',
-        emoji: '📤',
-        desc: '用 LibreOffice Kit 把 Office 文档转换成 PDF。',
+      'multi-search-engine': {
+        zh: '多引擎搜索',
+        group: '搜索研究',
+        emoji: '🔎',
+        desc: '跨 16 个搜索引擎检索、去重并交叉验证，输出带来源链接与可信度标注的结构化结果。',
       },
-      'office-recalculate': {
-        zh: '表格公式重算',
-        group: '办公文档',
-        emoji: '🧮',
-        desc: '刷新表格公式缓存，并用 LibreOffice Kit 核对计算结果。',
+      'dsh-doc': {
+        zh: 'DSH 使用手册',
+        group: '平台扩展',
+        emoji: '📖',
+        desc: '查 DSH 自身的功能、设置、插件、预设、工具与 Cordis API，也用于升级插件或 profile。',
       },
-      'office-render': {
-        zh: '文档渲染预览',
-        group: '办公文档',
-        emoji: '🖼️',
-        desc: '把文档渲染成图片，检查排版与视觉效果。',
+      'hindsight-coding-agent': {
+        zh: 'Hindsight 记忆',
+        group: '平台扩展',
+        emoji: '🧠',
+        desc: '读写跨会话的编码记忆，按仓库配置知识库，排查记忆相关问题。',
+      },
+      'taptap-maker': {
+        zh: 'TapTap Maker',
+        group: '平台扩展',
+        emoji: '🛠️',
+        desc: 'TapTap Maker / WorkBuddy 本地游戏开发：创建同步 Maker 项目、开发 UrhoX 游戏、提交构建与查反馈。',
       },
       'diagnose-windows-sandbox-acl': {
         zh: 'Windows 沙箱权限诊断',
@@ -122,23 +469,43 @@ window.__ModuleLoader__.load({
         emoji: '🛡️',
         desc: '排查 Windows 上意外的沙箱拒绝访问，检查并修复相关目录 ACL。',
       },
-      /* DSH 0.2.2-rc.1 merged four Creator-mode skills into `dsh-doc`, and
-         `office-export-pdf` / `office-recalculate` / `office-render` are now
-         tools behind `office` rather than catalog entries. Their entries stay
-         so a profile still on an older release keeps readable names; a current
-         catalog simply never returns these ids, and they cost one lookup each. */
     }
 
-    const GROUPS = ['开发编程', '游戏开发', '办公文档', '搜索研究', '平台扩展', '系统环境', '其他']
+    const GROUPS = ['开发编程', '游戏设计', '游戏类型', '玩法机制', '体验与表现', '游戏 UI', '引擎专精', '多媒体创作', '办公文档', '搜索研究', '平台扩展', '系统环境', '其他']
+
     const GROUP_EMOJI = {
-      开发编程: '🛠️',
-      游戏开发: '🎮',
-      办公文档: '📄',
-      搜索研究: '🔎',
-      平台扩展: '🧩',
-      系统环境: '🛡️',
-      其他: '📦',
+      '开发编程': '🛠️',
+      '游戏设计': '📐',
+      '游戏类型': '🎲',
+      '玩法机制': '⚙️',
+      '体验与表现': '💥',
+      '游戏 UI': '🖼️',
+      '引擎专精': '🧊',
+      '多媒体创作': '🎬',
+      '办公文档': '📄',
+      '搜索研究': '🔎',
+      '平台扩展': '🧩',
+      '系统环境': '🛡️',
+      '其他': '📦',
     }
+
+    /** Prefix rules that place a skill the table above does not list. */
+    const GROUP_RULES = [
+      ['godot-', '引擎专精'],
+      ['unity-', '引擎专精'],
+      ['unreal-', '引擎专精'],
+      ['roblox-', '引擎专精'],
+      ['phaser-', '引擎专精'],
+      ['pixijs-', '引擎专精'],
+      ['threejs-', '引擎专精'],
+      ['bevy-', '引擎专精'],
+      ['game-ui-', '游戏 UI'],
+      ['godot-ui', '引擎专精'],
+      ['office-', '办公文档'],
+      ['xyq-', '多媒体创作'],
+      ['jimeng-', '多媒体创作'],
+      ['dreamina-', '多媒体创作'],
+    ]
 
     const zh = {
       'button.label': '技能',
@@ -281,9 +648,20 @@ window.__ModuleLoader__.load({
       return (known && known.zh) || fallbackName(skill.name)
     }
 
+    /**
+     * Section for a skill: an explicit table entry wins, otherwise the first
+     * matching prefix rule, otherwise 「其他」. The rule fallback is what keeps a
+     * newly installed engine or UI skill out of 「其他」 even before anyone
+     * gives it a Chinese label.
+     */
     function groupOf(skill) {
       const known = SKILL_INFO[skill.name]
-      return known && GROUPS.includes(known.group) ? known.group : '其他'
+      if (known && GROUPS.includes(known.group)) return known.group
+      const id = String(skill.name || '').toLowerCase()
+      for (const [prefix, group] of GROUP_RULES) {
+        if (id.startsWith(prefix)) return group
+      }
+      return '其他'
     }
 
     function emojiOf(skill) {
