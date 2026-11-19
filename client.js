@@ -451,6 +451,12 @@ window.__ModuleLoader__.load({
         emoji: '📖',
         desc: '查 DSH 自身的功能、设置、插件、预设、工具与 Cordis API，也用于升级插件或 profile。',
       },
+      'skill-creator': {
+        zh: '技能编写指南',
+        group: '平台扩展',
+        emoji: '✍️',
+        desc: '教你写好一个技能：结构、触发描述、知识组织与可复用工作流，用于新建或改进技能。',
+      },
       'hindsight-coding-agent': {
         zh: 'Hindsight 记忆',
         group: '平台扩展',
@@ -526,6 +532,8 @@ window.__ModuleLoader__.load({
       'panel.unknownTitle': '这个技能还没有中文名，先按目录原名显示；点选后会插入 /原名。',
       'panel.manualOnly': '仅手动调用',
       'panel.manualOnlyTitle': '该技能已关闭模型自动调用，只能从这里或 / 菜单主动选用。',
+      'panel.descMatch': '名称里没有匹配项，以下是用途里提到「{0}」的技能',
+      'panel.descMatchShort': '按用途匹配',
     }
     const en = {
       'button.label': 'Skills',
@@ -546,6 +554,8 @@ window.__ModuleLoader__.load({
       'panel.unknownTitle': 'This skill has no display name yet, so it shows its catalog name; picking it inserts /name.',
       'panel.manualOnly': 'manual only',
       'panel.manualOnlyTitle': 'Model invocation is disabled for this skill; pick it here or from the / menu.',
+      'panel.descMatch': 'Nothing matched by name; these skills mention "{0}" in their purpose',
+      'panel.descMatchShort': 'matched by purpose',
     }
 
     const CSS = `
@@ -577,6 +587,10 @@ window.__ModuleLoader__.load({
 .skp-head-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .skp-title { font-size: 13.5px; font-weight: 600; }
 .skp-count { font-size: 11.5px; color: var(--dsw-alias-label-secondary); }
+.skp-desc-match {
+  padding: 1px 5px; border-radius: 5px; font-size: 10px; white-space: nowrap;
+  color: var(--dsw-alias-label-secondary); background: var(--dsw-alias-bg-layer-2);
+}
 .skp-search {
   width: 100%; box-sizing: border-box; height: 32px; padding: 0 10px;
   border-radius: 9px; border: 1px solid var(--dsw-alias-border-l2);
@@ -693,29 +707,48 @@ window.__ModuleLoader__.load({
       return skill.modelInvocable === false
     }
 
-    /** Everything one row can be found by: display name, id, description, group. */
-    function haystackOf(skill) {
-      return [
-        nameOf(skill),
-        skill.name,
-        descOf(skill),
-        skill.description,
-        skill.whenToUse,
-        groupOf(skill),
-      ]
+    /**
+     * What a search term is matched against, strongest first. A skill's own
+     * name and id say what it IS; its description mostly names other skills it
+     * pairs with ("…not for Godot UI"), so treating description text as an equal
+     * match made `godot` return unrelated rows that merely mention Godot.
+     */
+    function nameHaystack(skill) {
+      return [nameOf(skill), skill.name, groupOf(skill)]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+    }
+
+    function descHaystack(skill) {
+      return [descOf(skill), skill.description, skill.whenToUse]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
     }
 
     /**
-     * Every whitespace-separated term must appear somewhere in the row, so
-     * "office xlsx" and "表格 公式" both narrow instead of widening.
+     * Every whitespace-separated term must be satisfied by the same field, so
+     * "office xlsx" and "表格 公式" narrow instead of widening.
+     *
+     * Name/id/group hits are the primary set. Description hits are only
+     * consulted when the query matches nothing by name, so a search for a name
+     * never drags in rows that merely mention that word in prose.
      */
-    function matchesQuery(skill, terms) {
-      if (terms.length === 0) return true
-      const hay = haystackOf(skill)
-      return terms.every((term) => hay.includes(term))
+    function matchSkills(skills, terms) {
+      if (terms.length === 0) return { rows: skills, byDescription: false }
+      const byName = skills.filter((skill) => {
+        if (!skill || !skill.name) return false
+        const hay = nameHaystack(skill)
+        return terms.every((term) => hay.includes(term))
+      })
+      if (byName.length > 0) return { rows: byName, byDescription: false }
+      const byDesc = skills.filter((skill) => {
+        if (!skill || !skill.name) return false
+        const hay = descHaystack(skill)
+        return terms.every((term) => hay.includes(term))
+      })
+      return { rows: byDesc, byDescription: byDesc.length > 0 }
     }
 
     /** Prefix hits on the id or the display name float to the top of their group. */
@@ -906,16 +939,16 @@ window.__ModuleLoader__.load({
         [inputActions, draft],
       )
 
-      const groups = React.useMemo(() => {
+      const { groups, matchedByDescription } = React.useMemo(() => {
         const terms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
-        const matched = skills.filter((skill) => skill && skill.name && matchesQuery(skill, terms))
+        const found = matchSkills(skills, terms)
         const buckets = new Map()
-        for (const skill of matched) {
+        for (const skill of found.rows) {
           const group = groupOf(skill)
           if (!buckets.has(group)) buckets.set(group, [])
           buckets.get(group).push(skill)
         }
-        return sortGroups([...buckets.keys()]).map((group) => ({
+        const built = sortGroups([...buckets.keys()]).map((group) => ({
           group,
           items: buckets.get(group).sort((a, b) => {
             const byRank = rankOf(a, terms) - rankOf(b, terms)
@@ -923,6 +956,7 @@ window.__ModuleLoader__.load({
             return nameOf(a).localeCompare(nameOf(b), 'zh-Hans-CN')
           }),
         }))
+        return { groups: built, matchedByDescription: found.byDescription }
       }, [skills, query])
 
       const visibleCount = React.useMemo(
@@ -961,6 +995,13 @@ window.__ModuleLoader__.load({
                         ? t('panel.count', { 0: skills.length })
                         : t('panel.count', { 0: visibleCount }) + ' / ' + skills.length,
                     ),
+                    matchedByDescription
+                      ? h(
+                          'span',
+                          { className: 'skp-desc-match', title: t('panel.descMatch', { 0: query.trim() }) },
+                          t('panel.descMatchShort'),
+                        )
+                      : null,
                     h(
                       'button',
                       {
