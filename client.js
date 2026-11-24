@@ -457,6 +457,48 @@ window.__ModuleLoader__.load({
         emoji: '✍️',
         desc: '教你写好一个技能：结构、触发描述、知识组织与可复用工作流，用于新建或改进技能。',
       },
+      'official-plugins': {
+        zh: '官方插件速查',
+        group: '平台扩展',
+        emoji: '🧰',
+        desc: '回答「这个功能有没有、能不能做到、去哪开」：查 DSH 可选插件覆盖的工具、输入、终端、搜索、团队等能力。',
+      },
+      'personalized-pages': {
+        zh: '自定义页面提案',
+        group: '平台扩展',
+        emoji: '📑',
+        desc: '当你想在 DSH 里要一个页面、标签页、面板或小工具时，先按规范把方案提出来再实施。',
+      },
+      'self-improving-agent': {
+        zh: '自我改进经验库',
+        group: '平台扩展',
+        emoji: '🔁',
+        desc: '记录并维护踩过的坑、被纠正的假设与失效知识，下次先查再用，并定期复核有效性。',
+      },
+      'dsh-badge': {
+        zh: 'DSH 署名徽章',
+        group: '平台扩展',
+        emoji: '🏷️',
+        desc: '给文档、PR/MR 或产出物加上「powered by dsh」徽章与可复用代码片段。',
+      },
+      'novel-writing': {
+        zh: '中文小说创作',
+        group: '内容创作',
+        emoji: '✒️',
+        desc: '中文小说全流程：立意卖点、世界观人物、卷章大纲、逐章成稿、三级修订与一致性审计，覆盖网文与短篇。',
+      },
+      'zep-floorplan-walkthrough': {
+        zh: '户型图三维漫游',
+        group: '内容创作',
+        emoji: '🏠',
+        desc: '按住宅平面图生成可走动浏览的三维网页，支持滚动入室、四季切换、家装换版与离线交付。',
+      },
+      'true-pixel': {
+        zh: '像素图原生重建',
+        group: '内容创作',
+        emoji: '🧱',
+        desc: '把生图工具产出的像素风图片还原成原生分辨率 PNG：识别像素网格、指定精灵尺寸、透明边缘与色板。',
+      },
       'hindsight-coding-agent': {
         zh: 'Hindsight 记忆',
         group: '平台扩展',
@@ -477,7 +519,7 @@ window.__ModuleLoader__.load({
       },
     }
 
-    const GROUPS = ['开发编程', '游戏设计', '游戏类型', '玩法机制', '体验与表现', '游戏 UI', '引擎专精', '多媒体创作', '办公文档', '搜索研究', '平台扩展', '系统环境', '其他']
+    const GROUPS = ['开发编程', '游戏设计', '游戏类型', '玩法机制', '体验与表现', '游戏 UI', '引擎专精', '多媒体创作', '内容创作', '办公文档', '搜索研究', '平台扩展', '系统环境', '其他']
 
     const GROUP_EMOJI = {
       '开发编程': '🛠️',
@@ -488,6 +530,7 @@ window.__ModuleLoader__.load({
       '游戏 UI': '🖼️',
       '引擎专精': '🧊',
       '多媒体创作': '🎬',
+      '内容创作': '✒️',
       '办公文档': '📄',
       '搜索研究': '🔎',
       '平台扩展': '🧩',
@@ -511,6 +554,9 @@ window.__ModuleLoader__.load({
       ['xyq-', '多媒体创作'],
       ['jimeng-', '多媒体创作'],
       ['dreamina-', '多媒体创作'],
+      ['novel-', '内容创作'],
+      ['dsh-', '平台扩展'],
+      ['cordis-', '平台扩展'],
     ]
 
     const zh = {
@@ -532,6 +578,8 @@ window.__ModuleLoader__.load({
       'panel.unknownTitle': '这个技能还没有中文名，先按目录原名显示；点选后会插入 /原名。',
       'panel.manualOnly': '仅手动调用',
       'panel.manualOnlyTitle': '该技能已关闭模型自动调用，只能从这里或 / 菜单主动选用。',
+      'panel.englishDesc': '原文',
+      'panel.englishDescTitle': '这个技能还没有中文简介，显示的是它自带说明的原文，未经翻译。',
       'panel.descMatch': '名称里没有匹配项，以下是用途里提到「{0}」的技能',
       'panel.descMatchShort': '按用途匹配',
     }
@@ -554,6 +602,8 @@ window.__ModuleLoader__.load({
       'panel.unknownTitle': 'This skill has no display name yet, so it shows its catalog name; picking it inserts /name.',
       'panel.manualOnly': 'manual only',
       'panel.manualOnlyTitle': 'Model invocation is disabled for this skill; pick it here or from the / menu.',
+      'panel.englishDesc': 'as written',
+      'panel.englishDescTitle': 'No Chinese summary yet, so this shows the skill’s own wording untranslated.',
       'panel.descMatch': 'Nothing matched by name; these skills mention "{0}" in their purpose',
       'panel.descMatchShort': 'matched by purpose',
     }
@@ -1097,6 +1147,13 @@ window.__ModuleLoader__.load({
                             manualOnly(skill)
                               ? h('span', { className: 'skp-badge skp-badge-inline' }, t('panel.manualOnly'))
                               : null,
+                            SKILL_INFO[skill.name]
+                              ? null
+                              : h(
+                                  'span',
+                                  { className: 'skp-badge skp-badge-inline', title: t('panel.englishDescTitle') },
+                                  t('panel.englishDesc'),
+                                ),
                             descOf(skill),
                           ),
                         ),
